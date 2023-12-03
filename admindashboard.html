@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <style>
+   
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .selected {
+      background-color: #ccc;
+    }
+
+    .pagination {
+      margin-top: 20px;
+    }
+
+    .action-btn {
+      cursor: pointer;
+      padding: 5px 10px;
+      margin-right: 5px;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+    }
+
+    .search-input {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="search-input">
+    <label for="search">Search: </label>
+    <input type="text" id="search" placeholder="Search...">
+    <button class="search-icon" onclick="search()">Search</button>
+  </div>
+
+  <table id="userTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="userBody"></tbody>
+  </table>
+
+  <div class="pagination" id="pagination"></div>
+
+  <button class="action-btn" onclick="deleteSelected()">Delete Selected</button>
+
+  <script>
+    const pageSize = 10;
+    let currentPage = 1;
+    let selectedRows = [];
+
+    function fetchUsers() {
+      
+      fetch('https://geektrust.s3-ap-southeast-1.amazonaws.com/adminui-problem/members.json')
+        .then(response => response.json())
+        .then(data => renderTable(data))
+        .catch(error => console.error('Error fetching data:', error));
+    }
+
+    function renderTable(users) {
+      const tableBody = document.getElementById('userBody');
+      tableBody.innerHTML = '';
+
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+
+      for (let i = start; i < end && i < users.length; i++) {
+        const user = users[i];
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${user.id}</td>
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td>${user.role}</td>
+          <td>
+            <button class="action-btn edit" onclick="editRow(${i})">Edit</button>
+            <button class="action-btn delete" onclick="deleteRow(${i})">Delete</button>
+          </td>
+        `;
+        if (selectedRows.includes(i)) {
+          row.classList.add('selected');
+        }
+        tableBody.appendChild(row);
+      }
+
+      renderPagination(users.length);
+    }
+
+    function renderPagination(totalUsers) {
+      const totalPages = Math.ceil(totalUsers / pageSize);
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+
+      for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = i;
+        pageBtn.className = 'page-btn';
+        pageBtn.addEventListener('click', () => goToPage(i));
+        pagination.appendChild(pageBtn);
+      }
+
+      
+      const firstPageBtn = createNavigationButton('First', 1);
+      const prevPageBtn = createNavigationButton('Prev', currentPage - 1);
+      const nextPageBtn = createNavigationButton('Next', currentPage + 1);
+      const lastPageBtn = createNavigationButton('Last', totalPages);
+
+      pagination.prepend(firstPageBtn, prevPageBtn);
+      pagination.appendChild(nextPageBtn, lastPageBtn);
+    }
+
+    function createNavigationButton(label, targetPage) {
+      const btn = document.createElement('button');
+      btn.textContent = label;
+      btn.className = `page-btn ${label.toLowerCase()}-page`;
+      btn.addEventListener('click', () => goToPage(targetPage));
+      return btn;
+    }
+
+    function goToPage(page) {
+      if (page >= 1 && page <= Math.ceil(users.length / pageSize)) {
+        currentPage = page;
+        fetchUsers();
+      }
+    }
+
+    function search() {
+      const searchValue = document.getElementById('search').value.toLowerCase();
+      const filteredUsers = users.filter(user =>
+        Object.values(user).some(value => value.toLowerCase().includes(searchValue))
+      );
+      renderTable(filteredUsers);
+    }
+
+    function editRow(index) {
+     
+      console.log('Edit row:', index);
+    }
+
+    function deleteRow(index) {
+     
+      console.log('Delete row:', index);
+    }
+
+    function deleteSelected() {
+     
+      console.log('Delete selected rows:', selectedRows);
+    }
+
+    window.onload = () => {
+      fetchUsers();
+    };
+  </script>
+</body>
+</html>
